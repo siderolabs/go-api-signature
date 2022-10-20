@@ -1,0 +1,10 @@
+---
+kind: golang.Generate
+spec:
+  goGenerateSpecs:
+    - source: ./internal
+  vtProtobufEnabled: true
+  specs:
+    - source: api/auth/auth.proto
+      subdirectory: auth
+      genGateway: true

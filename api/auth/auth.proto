@@ -1,0 +1,39 @@
+syntax = "proto3";
+package auth;
+
+option go_package = "github.com/siderolabs/go-api-signature/api/auth";
+
+import "google/protobuf/empty.proto";
+
+message PublicKey {
+  bytes pgp_data = 1;
+  bytes webauthn_data = 2;
+}
+
+message Identity {
+  string email = 1;
+}
+
+message RegisterPublicKeyRequest {
+  PublicKey public_key = 1;
+  Identity identity = 2;
+}
+
+message RegisterPublicKeyResponse {
+  string login_url = 1;
+  string public_key_id = 2;
+}
+
+message AwaitPublicKeyConfirmationRequest {
+  string public_key_id = 1;
+}
+
+message ConfirmPublicKeyRequest {
+  string public_key_id = 1;
+}
+
+service AuthService {
+  rpc RegisterPublicKey(RegisterPublicKeyRequest) returns (RegisterPublicKeyResponse);
+  rpc AwaitPublicKeyConfirmation(AwaitPublicKeyConfirmationRequest) returns (google.protobuf.Empty);
+  rpc ConfirmPublicKey(ConfirmPublicKeyRequest) returns (google.protobuf.Empty);
+}
