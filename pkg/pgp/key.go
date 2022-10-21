@@ -85,6 +85,11 @@ func (p *Key) IsPrivate() bool {
 	return p.key.IsPrivate()
 }
 
+// IsUnlocked returns true if the private key is unlocked.
+func (p *Key) IsUnlocked() (bool, error) {
+	return p.key.IsUnlocked()
+}
+
 // Armor returns the key in the armored format.
 func (p *Key) Armor() (string, error) {
 	return p.key.Armor()

@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20220930113650-c6815a8c17ad
 	github.com/ProtonMail/gopenpgp/v2 v2.4.10
+	github.com/adrg/xdg v0.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/stretchr/testify v1.8.0
