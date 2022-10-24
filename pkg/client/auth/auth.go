@@ -27,12 +27,15 @@ func NewClient(conn *grpc.ClientConn) *Client {
 
 // RegisterPGPPublicKey registers a PGP public key for the given identity and returns the login URL.
 // Registered public key will need to be verified before it can be used for signing.
-func (client *Client) RegisterPGPPublicKey(ctx context.Context, email string, publicKey []byte) (string, error) {
+// If no scopes are specified and skipUserScopes is false, the scopes of the user are assigned to the public key by the server.
+func (client *Client) RegisterPGPPublicKey(ctx context.Context, email string, publicKey []byte, skipUserScopes bool, scopes ...string) (string, error) {
 	resp, err := client.conn.RegisterPublicKey(ctx, &authpb.RegisterPublicKeyRequest{
 		Identity: &authpb.Identity{Email: email},
 		PublicKey: &authpb.PublicKey{
 			PgpData: publicKey,
 		},
+		Scopes:         scopes,
+		SkipUserScopes: skipUserScopes,
 	})
 	if err != nil {
 		return "", err

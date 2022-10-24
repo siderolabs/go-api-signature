@@ -17,6 +17,10 @@ message Identity {
 message RegisterPublicKeyRequest {
   PublicKey public_key = 1;
   Identity identity = 2;
+  repeated string scopes = 3;
+
+  // If true and the scopes are empty, the user scopes will not be added to the public key.
+  bool skip_user_scopes = 4;
 }
 
 message RegisterPublicKeyResponse {
