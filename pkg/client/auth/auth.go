@@ -25,18 +25,39 @@ func NewClient(conn *grpc.ClientConn) *Client {
 	}
 }
 
+// RegisterPGPPublicKeyOption customizes authpb.RegisterPublicKeyRequest.
+type RegisterPGPPublicKeyOption func(*authpb.RegisterPublicKeyRequest)
+
+// WithScopes sets the scopes in the authpb.RegisterPublicKeyRequest.
+func WithScopes(scopes ...string) RegisterPGPPublicKeyOption {
+	return func(o *authpb.RegisterPublicKeyRequest) {
+		o.Scopes = scopes
+	}
+}
+
+// WithSkipUserScopes sets the skipUserScopes flag in the authpb.RegisterPublicKeyRequest.
+// If true and no scopes are specified using WithScopes, the scopes of the user are assigned to the public key by the server.
+func WithSkipUserScopes(skipUserScopes bool) RegisterPGPPublicKeyOption {
+	return func(o *authpb.RegisterPublicKeyRequest) {
+		o.SkipUserScopes = skipUserScopes
+	}
+}
+
 // RegisterPGPPublicKey registers a PGP public key for the given identity and returns the login URL.
 // Registered public key will need to be verified before it can be used for signing.
-// If no scopes are specified and skipUserScopes is false, the scopes of the user are assigned to the public key by the server.
-func (client *Client) RegisterPGPPublicKey(ctx context.Context, email string, publicKey []byte, skipUserScopes bool, scopes ...string) (string, error) {
-	resp, err := client.conn.RegisterPublicKey(ctx, &authpb.RegisterPublicKeyRequest{
+func (client *Client) RegisterPGPPublicKey(ctx context.Context, email string, publicKey []byte, opt ...RegisterPGPPublicKeyOption) (string, error) {
+	request := authpb.RegisterPublicKeyRequest{
 		Identity: &authpb.Identity{Email: email},
 		PublicKey: &authpb.PublicKey{
 			PgpData: publicKey,
 		},
-		Scopes:         scopes,
-		SkipUserScopes: skipUserScopes,
-	})
+	}
+
+	for _, o := range opt {
+		o(&request)
+	}
+
+	resp, err := client.conn.RegisterPublicKey(ctx, &request)
 	if err != nil {
 		return "", err
 	}
