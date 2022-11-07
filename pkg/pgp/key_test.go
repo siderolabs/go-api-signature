@@ -96,6 +96,10 @@ func TestKeyExpiration(t *testing.T) {
 			lifetime: pgp.MaxAllowedLifetime / 2,
 			shift:    pgp.AllowedClockSkew / 2,
 		},
+		{
+			name:     "short-lived key",
+			lifetime: pgp.AllowedClockSkew / 2,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			key := genKey(t, uint32(tt.lifetime/time.Second), func() time.Time {

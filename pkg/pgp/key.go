@@ -104,9 +104,19 @@ func (p *Key) ArmorPublic() (string, error) {
 
 // IsExpired returns true if the key is expired with clock skew.
 func (p *Key) IsExpired(clockSkew time.Duration) bool {
+	if clockSkew < 0 {
+		panic("clock skew can't be negative")
+	}
+
 	now := time.Now()
 
 	i := p.key.GetEntity().PrimaryIdentity()
+	keyLifetimeSecs := i.SelfSignature.KeyLifetimeSecs
+
+	if keyLifetimeSecs != nil && *keyLifetimeSecs < uint32(clockSkew/time.Second) {
+		// if the key is short-lived, limit clock skew to the half of the key lifetime
+		clockSkew = time.Duration(*keyLifetimeSecs) * time.Second / 2
+	}
 
 	expired := func(t time.Time) bool {
 		return p.key.GetEntity().PrimaryKey.KeyExpired(i.SelfSignature, t) || // primary key has expired
