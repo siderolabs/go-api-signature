@@ -16,8 +16,10 @@ import (
 	pgpcrypto "github.com/ProtonMail/gopenpgp/v2/crypto"
 )
 
+// Time-related key settings.
 const (
-	maxAllowedLifetime = 8 * time.Hour
+	MaxAllowedLifetime = 8 * time.Hour
+	AllowedClockSkew   = 5 * time.Minute
 )
 
 // Key represents a PGP key. It can be a public key or a private & public key pair.
@@ -100,14 +102,24 @@ func (p *Key) ArmorPublic() (string, error) {
 	return p.key.GetArmoredPublicKey()
 }
 
+// IsExpired returns true if the key is expired with clock skew.
+func (p *Key) IsExpired(clockSkew time.Duration) bool {
+	now := time.Now()
+
+	i := p.key.GetEntity().PrimaryIdentity()
+
+	expired := func(t time.Time) bool {
+		return p.key.GetEntity().PrimaryKey.KeyExpired(i.SelfSignature, t) || // primary key has expired
+			i.SelfSignature.SigExpired(t) // user ID self-signature has expired
+	}
+
+	return expired(now.Add(clockSkew)) && expired(now.Add(-clockSkew))
+}
+
 // Validate validates the key.
 func (p *Key) Validate() error {
 	if p.key.IsRevoked() {
 		return fmt.Errorf("key is revoked")
-	}
-
-	if p.key.IsExpired() {
-		return fmt.Errorf("key is expired")
 	}
 
 	entity := p.key.GetEntity()
@@ -118,6 +130,10 @@ func (p *Key) Validate() error {
 	identity := entity.PrimaryIdentity()
 	if identity == nil {
 		return fmt.Errorf("key does not contain a primary identity")
+	}
+
+	if p.IsExpired(AllowedClockSkew) {
+		return fmt.Errorf("key expired")
 	}
 
 	_, err := mail.ParseAddress(identity.Name)
@@ -137,7 +153,7 @@ func (p *Key) validateLifetime() error {
 		return fmt.Errorf("key does not contain a valid key lifetime")
 	}
 
-	expiration := time.Now().Add(maxAllowedLifetime)
+	expiration := time.Now().Add(MaxAllowedLifetime)
 
 	if !entity.PrimaryKey.KeyExpired(sig, expiration) {
 		return fmt.Errorf("key lifetime is too long: %s", time.Duration(*sig.KeyLifetimeSecs)*time.Second)
@@ -158,10 +174,5 @@ func generateEntity(name, comment, email string, lifetimeSecs uint32) (*openpgp.
 		SigLifetimeSecs:        lifetimeSecs,
 	}
 
-	newEntity, err := openpgp.NewEntity(name, comment, email, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return newEntity, nil
+	return openpgp.NewEntity(name, comment, email, cfg)
 }
