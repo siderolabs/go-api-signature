@@ -35,7 +35,7 @@ func TestKeyFlow(t *testing.T) {
 	assert.Error(t, key.Verify(message, signature[:len(signature)-1]))
 }
 
-func genKey(t *testing.T, lifetimeSecs uint32, now func() time.Time) *pgp.Key {
+func genKey(t *testing.T, lifetimeSecs uint32, email string, now func() time.Time) *pgp.Key {
 	cfg := &packet.Config{
 		Algorithm:              packet.PubKeyAlgoEdDSA,
 		DefaultHash:            crypto.SHA256,
@@ -46,7 +46,7 @@ func genKey(t *testing.T, lifetimeSecs uint32, now func() time.Time) *pgp.Key {
 		Time:                   now,
 	}
 
-	entity, err := openpgp.NewEntity("test", "test", "keytest@example.com", cfg)
+	entity, err := openpgp.NewEntity("test", "test", email, cfg)
 	require.NoError(t, err)
 
 	key, err := pgpcrypto.NewKeyFromEntity(entity)
@@ -58,55 +58,95 @@ func genKey(t *testing.T, lifetimeSecs uint32, now func() time.Time) *pgp.Key {
 	return pgpKey
 }
 
-func TestKeyExpiration(t *testing.T) {
+func TestKeyValidation(t *testing.T) {
 	for _, tt := range []struct { //nolint:govet
 		name          string
 		lifetime      time.Duration
 		shift         time.Duration
 		expectedError string
+		email         string
+		opts          []pgp.ValidationOption
 	}{
 		{
 			name:          "no expiration",
+			email:         "keytest@example.com",
 			expectedError: "key does not contain a valid key lifetime",
 		},
 		{
 			name:          "expiration too long",
-			lifetime:      pgp.MaxAllowedLifetime + 1*time.Hour,
+			email:         "keytest@example.com",
+			lifetime:      pgp.DefaultMaxAllowedLifetime + 1*time.Hour,
 			expectedError: "key lifetime is too long: 9h0m0s",
 		},
 		{
 			name:          "generated in the future",
-			lifetime:      pgp.MaxAllowedLifetime / 2,
-			shift:         pgp.AllowedClockSkew * 2,
+			email:         "keytest@example.com",
+			lifetime:      pgp.DefaultMaxAllowedLifetime / 2,
+			shift:         pgp.DefaultAllowedClockSkew * 2,
 			expectedError: "key expired",
 		},
 		{
+			name:     "generated in the future - custom skew validation",
+			email:    "keytest@example.com",
+			lifetime: pgp.DefaultMaxAllowedLifetime / 2,
+			shift:    pgp.DefaultAllowedClockSkew * 2,
+			opts: []pgp.ValidationOption{
+				pgp.WithAllowedClockSkew(pgp.DefaultAllowedClockSkew * 3),
+			},
+		},
+		{
 			name:          "already expired",
-			lifetime:      pgp.MaxAllowedLifetime / 2,
-			shift:         -pgp.AllowedClockSkew*2 - pgp.MaxAllowedLifetime/2,
+			email:         "keytest@example.com",
+			lifetime:      pgp.DefaultMaxAllowedLifetime / 2,
+			shift:         -pgp.DefaultAllowedClockSkew*2 - pgp.DefaultMaxAllowedLifetime/2,
 			expectedError: "key expired",
 		},
 		{
 			name:     "within clock skew -",
-			lifetime: pgp.MaxAllowedLifetime / 2,
-			shift:    -pgp.AllowedClockSkew / 2,
+			email:    "keytest@example.com",
+			lifetime: pgp.DefaultMaxAllowedLifetime / 2,
+			shift:    -pgp.DefaultAllowedClockSkew / 2,
 		},
 		{
 			name:     "within clock skew +",
-			lifetime: pgp.MaxAllowedLifetime / 2,
-			shift:    pgp.AllowedClockSkew / 2,
+			email:    "keytest@example.com",
+			lifetime: pgp.DefaultMaxAllowedLifetime / 2,
+			shift:    pgp.DefaultAllowedClockSkew / 2,
 		},
 		{
 			name:     "short-lived key",
-			lifetime: pgp.AllowedClockSkew / 2,
+			email:    "keytest@example.com",
+			lifetime: pgp.DefaultAllowedClockSkew / 2,
+		},
+		{
+			name:     "long-lived key - custom lifetime validation",
+			email:    "keytest@example.com",
+			lifetime: 30 * 24 * time.Hour,
+			opts: []pgp.ValidationOption{
+				pgp.WithMaxAllowedLifetime(31 * 24 * time.Hour),
+			},
+		},
+		{
+			name:          "invalid email",
+			email:         "invalid",
+			lifetime:      pgp.DefaultMaxAllowedLifetime / 2,
+			expectedError: "key does not contain a valid email address: mail: missing @ in addr-spec: test (test) <invalid>",
+		},
+		{
+			name:     "invalid email - skipped validation",
+			email:    "invalid",
+			lifetime: pgp.DefaultMaxAllowedLifetime / 2,
+			opts: []pgp.ValidationOption{
+				pgp.WithValidEmailAsName(false),
+			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			key := genKey(t, uint32(tt.lifetime/time.Second), func() time.Time {
+			key := genKey(t, uint32(tt.lifetime/time.Second), tt.email, func() time.Time {
 				return time.Now().Add(tt.shift)
 			})
 
-			err := key.Validate()
+			err := key.Validate(tt.opts...)
 
 			if tt.expectedError != "" {
 				assert.Error(t, err)

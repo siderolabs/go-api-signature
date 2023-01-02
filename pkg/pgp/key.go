@@ -7,19 +7,11 @@ package pgp
 
 import (
 	"crypto"
-	"fmt"
-	"net/mail"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	pgpcrypto "github.com/ProtonMail/gopenpgp/v2/crypto"
-)
-
-// Time-related key settings.
-const (
-	MaxAllowedLifetime = 8 * time.Hour
-	AllowedClockSkew   = 5 * time.Minute
 )
 
 // Key represents a PGP key. It can be a public key or a private & public key pair.
@@ -124,52 +116,6 @@ func (p *Key) IsExpired(clockSkew time.Duration) bool {
 	}
 
 	return expired(now.Add(clockSkew)) && expired(now.Add(-clockSkew))
-}
-
-// Validate validates the key.
-func (p *Key) Validate() error {
-	if p.key.IsRevoked() {
-		return fmt.Errorf("key is revoked")
-	}
-
-	entity := p.key.GetEntity()
-	if entity == nil {
-		return fmt.Errorf("key does not contain an entity")
-	}
-
-	identity := entity.PrimaryIdentity()
-	if identity == nil {
-		return fmt.Errorf("key does not contain a primary identity")
-	}
-
-	if p.IsExpired(AllowedClockSkew) {
-		return fmt.Errorf("key expired")
-	}
-
-	_, err := mail.ParseAddress(identity.Name)
-	if err != nil {
-		return fmt.Errorf("key does not contain a valid email address: %w: %s", err, identity.Name)
-	}
-
-	return p.validateLifetime()
-}
-
-func (p *Key) validateLifetime() error {
-	entity := p.key.GetEntity()
-	identity := entity.PrimaryIdentity()
-	sig := identity.SelfSignature
-
-	if sig.KeyLifetimeSecs == nil || *sig.KeyLifetimeSecs == 0 {
-		return fmt.Errorf("key does not contain a valid key lifetime")
-	}
-
-	expiration := time.Now().Add(MaxAllowedLifetime)
-
-	if !entity.PrimaryKey.KeyExpired(sig, expiration) {
-		return fmt.Errorf("key lifetime is too long: %s", time.Duration(*sig.KeyLifetimeSecs)*time.Second)
-	}
-
-	return nil
 }
 
 // generateEntity generates a new PGP entity.
