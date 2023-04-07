@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2022-10-20T12:09:57Z by kres ef0ba25.
+# Generated on 2023-04-07T17:34:58Z by kres latest.
 
 # options for analysis running
 run:
@@ -150,6 +150,12 @@ linters:
     - maligned
     - golint
     - scopelint
+    - varcheck
+    - deadcode
+    - structcheck
+    - ifshort
+    # disabled as it seems to be broken - goes into imported libraries and reports issues there
+    - musttag
 
 issues:
   exclude: []
