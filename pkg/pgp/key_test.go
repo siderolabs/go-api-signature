@@ -30,6 +30,10 @@ func TestKeyFlow(t *testing.T) {
 	signature, err := key.Sign(message)
 	require.NoError(t, err)
 
+	// KeyRing.VerifyDetached has a second resolution, so we need to wait a bit or the key will report as expired
+	// TODO: this is a bug in gopenpgp, we should fix it there at some moment
+	time.Sleep(time.Second)
+
 	assert.NoError(t, key.Verify(message, signature))
 	assert.Error(t, key.Verify(message[:len(message)-1], signature))
 	assert.Error(t, key.Verify(message, signature[:len(signature)-1]))
