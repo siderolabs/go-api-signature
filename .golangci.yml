@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2023-04-07T17:34:58Z by kres latest.
+# Generated on 2023-05-22T18:49:58Z by kres latest.
 
 # options for analysis running
 run:
@@ -36,7 +36,7 @@ linters-settings:
     lines: 60
     statements: 40
   gci:
-    local-prefixes: github.com/siderolabs/go-api-signature
+    local-prefixes: github.com/siderolabs/go-api-signature/
   gocognit:
     min-complexity: 30
   ireturn:
@@ -65,7 +65,7 @@ linters-settings:
   gofmt:
     simplify: true
   goimports:
-    local-prefixes: github.com/siderolabs/go-api-signature
+    local-prefixes: github.com/siderolabs/go-api-signature/
   golint:
     min-confidence: 0.8
   gomnd:
