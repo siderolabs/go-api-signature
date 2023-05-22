@@ -3,12 +3,12 @@ module github.com/siderolabs/go-api-signature
 go 1.20
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756
+	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903
 	github.com/ProtonMail/gopenpgp/v2 v2.7.1
 	github.com/adrg/xdg v0.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 )
