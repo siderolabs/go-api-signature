@@ -73,16 +73,10 @@ func (this *RegisterPublicKeyRequest) EqualVT(that *RegisterPublicKeyRequest) bo
 	if !this.Identity.EqualVT(that.Identity) {
 		return false
 	}
-	if len(this.Scopes) != len(that.Scopes) {
+	if this.Role != that.Role {
 		return false
 	}
-	for i, vx := range this.Scopes {
-		vy := that.Scopes[i]
-		if vx != vy {
-			return false
-		}
-	}
-	if this.SkipUserScopes != that.SkipUserScopes {
+	if this.SkipUserRole != that.SkipUserRole {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -272,24 +266,22 @@ func (m *RegisterPublicKeyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, err
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.SkipUserScopes {
+	if m.SkipUserRole {
 		i--
-		if m.SkipUserScopes {
+		if m.SkipUserRole {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x20
+		dAtA[i] = 0x30
 	}
-	if len(m.Scopes) > 0 {
-		for iNdEx := len(m.Scopes) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Scopes[iNdEx])
-			copy(dAtA[i:], m.Scopes[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.Scopes[iNdEx])))
-			i--
-			dAtA[i] = 0x1a
-		}
+	if len(m.Role) > 0 {
+		i -= len(m.Role)
+		copy(dAtA[i:], m.Role)
+		i = encodeVarint(dAtA, i, uint64(len(m.Role)))
+		i--
+		dAtA[i] = 0x2a
 	}
 	if m.Identity != nil {
 		size, err := m.Identity.MarshalToSizedBufferVT(dAtA[:i])
@@ -498,13 +490,11 @@ func (m *RegisterPublicKeyRequest) SizeVT() (n int) {
 		l = m.Identity.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if len(m.Scopes) > 0 {
-		for _, s := range m.Scopes {
-			l = len(s)
-			n += 1 + l + sov(uint64(l))
-		}
+	l = len(m.Role)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
-	if m.SkipUserScopes {
+	if m.SkipUserRole {
 		n += 2
 	}
 	n += len(m.unknownFields)
@@ -866,9 +856,9 @@ func (m *RegisterPublicKeyRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 3:
+		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Scopes", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Role", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -896,11 +886,11 @@ func (m *RegisterPublicKeyRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Scopes = append(m.Scopes, string(dAtA[iNdEx:postIndex]))
+			m.Role = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 6:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SkipUserScopes", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SkipUserRole", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -917,7 +907,7 @@ func (m *RegisterPublicKeyRequest) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-			m.SkipUserScopes = bool(v != 0)
+			m.SkipUserRole = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

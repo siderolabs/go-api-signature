@@ -28,18 +28,19 @@ func NewClient(conn *grpc.ClientConn) *Client {
 // RegisterPGPPublicKeyOption customizes authpb.RegisterPublicKeyRequest.
 type RegisterPGPPublicKeyOption func(*authpb.RegisterPublicKeyRequest)
 
-// WithScopes sets the scopes in the authpb.RegisterPublicKeyRequest.
-func WithScopes(scopes ...string) RegisterPGPPublicKeyOption {
+// WithRole sets the role in the authpb.RegisterPublicKeyRequest.
+// Only effective if skipUserRole is true.
+func WithRole(role string) RegisterPGPPublicKeyOption {
 	return func(o *authpb.RegisterPublicKeyRequest) {
-		o.Scopes = scopes
+		o.Role = role
 	}
 }
 
-// WithSkipUserScopes sets the skipUserScopes flag in the authpb.RegisterPublicKeyRequest.
-// If true and no scopes are specified using WithScopes, the scopes of the user are assigned to the public key by the server.
-func WithSkipUserScopes(skipUserScopes bool) RegisterPGPPublicKeyOption {
+// WithSkipUserRole sets the skipUserRole flag in the authpb.RegisterPublicKeyRequest.
+// When true, the role set via WithRole is respected.
+func WithSkipUserRole(skipUserRole bool) RegisterPGPPublicKeyOption {
 	return func(o *authpb.RegisterPublicKeyRequest) {
-		o.SkipUserScopes = skipUserScopes
+		o.SkipUserRole = skipUserRole
 	}
 }
 

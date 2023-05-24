@@ -17,10 +17,12 @@ message Identity {
 message RegisterPublicKeyRequest {
   PublicKey public_key = 1;
   Identity identity = 2;
-  repeated string scopes = 3;
-
-  // If true and the scopes are empty, the user scopes will not be added to the public key.
-  bool skip_user_scopes = 4;
+  reserved 3;
+  reserved 4;
+  // The role of the public key. When skip_user_role is true, this field is ignored.
+  string role = 5;
+  // If true, the role field will be used to determine the role of the public key.
+  bool skip_user_role = 6;
 }
 
 message RegisterPublicKeyResponse {
