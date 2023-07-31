@@ -7,6 +7,7 @@ package pgp
 
 import (
 	"crypto"
+	"math"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -59,7 +60,19 @@ func (p *Key) Verify(data, signature []byte) error {
 
 	sig := pgpcrypto.NewPGPSignature(signature)
 
-	return p.keyring.VerifyDetached(message, sig, pgpcrypto.GetUnixTime())
+	if p.keyring.VerifyDetached(message, sig, pgpcrypto.GetUnixTime()) == nil {
+		return nil
+	}
+
+	clockSkew := DefaultAllowedClockSkew.Seconds()
+
+	i := p.key.GetEntity().PrimaryIdentity()
+
+	if i.SelfSignature.KeyLifetimeSecs != nil {
+		clockSkew = math.Min(float64(*i.SelfSignature.KeyLifetimeSecs)/2, clockSkew)
+	}
+
+	return p.keyring.VerifyDetached(message, sig, pgpcrypto.GetUnixTime()+int64(clockSkew))
 }
 
 // Sign signs the given data using the private key.

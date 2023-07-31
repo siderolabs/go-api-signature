@@ -35,6 +35,32 @@ func TestKeyFlow(t *testing.T) {
 	assert.Error(t, key.Verify(message, signature[:len(signature)-1]))
 }
 
+func TestTimeSkew(t *testing.T) {
+	start := time.Now()
+
+	key, err := pgp.GenerateKey("John Smith", "Linux", "john.smith@example.com", time.Hour)
+	require.NoError(t, err)
+
+	assert.True(t, key.IsPrivate())
+	assert.NoError(t, key.Validate())
+
+	message := []byte("Hello, World!")
+
+	signature, err := key.Sign(message)
+	require.NoError(t, err)
+
+	pgpcrypto.UpdateTime(start.Add(-time.Minute).Unix())
+
+	assert.NoError(t, key.Verify(message, signature))
+
+	pgpcrypto.UpdateTime(start.Add(time.Hour).Unix())
+
+	signature, err = key.Sign(message)
+	require.NoError(t, err)
+
+	assert.NoError(t, key.Verify(message, signature))
+}
+
 func genKey(t *testing.T, lifetimeSecs uint32, email string, now func() time.Time) *pgp.Key {
 	cfg := &packet.Config{
 		Algorithm:              packet.PubKeyAlgoEdDSA,
