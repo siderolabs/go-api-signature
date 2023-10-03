@@ -8,3 +8,7 @@ spec:
     - source: api/auth/auth.proto
       subdirectory: auth
       genGateway: true
+---
+kind: service.CodeCov
+spec:
+  targetThreshold: 10

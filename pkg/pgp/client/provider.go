@@ -37,7 +37,7 @@ func NewKeyProvider(dataFileDirectory string) *KeyProvider {
 
 // ReadValidKey reads a PGP key from the filesystem.
 //
-// If the key is missing or invalid (e.g. expired, revoked), an error will be returned.
+// If the key is missing or invalid (e.g., expired, revoked), an error will be returned.
 func (provider *KeyProvider) ReadValidKey(context, email string) (*Key, error) {
 	keyPath, err := provider.getKeyFilePath(context, email)
 	if err != nil {

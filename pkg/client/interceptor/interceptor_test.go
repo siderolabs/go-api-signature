@@ -119,24 +119,20 @@ func (suite *SignatureTestSuite) SetupSuite() {
 
 	var err error
 
-	signerFunc := func(ctx context.Context, cc *grpc.ClientConn) (message.Signer, error) {
-		return testSigner1, nil
-	}
-
-	renewSignerFunc := func(ctx context.Context, cc *grpc.ClientConn) (message.Signer, error) {
-		return testSigner2, nil
-	}
-
-	authEnabledFunc := func(ctx context.Context, cc *grpc.ClientConn) (bool, error) {
-		return true, nil
-	}
-
-	signatureInterceptor := interceptor.NewSignature("test@example.org", signerFunc, renewSignerFunc, authEnabledFunc)
+	clientInterceptor := interceptor.New(interceptor.Options{
+		GetUserKeyFunc: func(_ context.Context, _ *grpc.ClientConn, _ *interceptor.Options) (message.Signer, error) {
+			return testSigner1, nil
+		},
+		RenewUserKeyFunc: func(_ context.Context, _ *grpc.ClientConn, _ *interceptor.Options) (message.Signer, error) {
+			return testSigner2, nil
+		},
+		Identity: "test@example.org",
+	})
 
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(signatureInterceptor.Unary()),
-		grpc.WithStreamInterceptor(signatureInterceptor.Stream()),
+		grpc.WithUnaryInterceptor(clientInterceptor.Unary()),
+		grpc.WithStreamInterceptor(clientInterceptor.Stream()),
 	}
 
 	suite.clientConn, err = grpc.Dial(suite.Target, dialOptions...)
