@@ -1,0 +1,35 @@
+name: default
+concurrency:
+  group: ${{ github.event.label == null && github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  push:
+    branches:
+      - main
+      - release-*
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - main
+      - release-*
+jobs:
+  default:
+    permissions:
+      contents: write
+      packages: write
+    runs-on:
+      - self-hosted
+      - generic
+    services:
+      buildkitd:
+        image: moby/buildkit:v0.12.2
+        options: --privileged
+        ports:
+          - 1234:1234
+        volumes:
+          - /var/lib/buildkit/${{ github.repository }}:/var/lib/buildkit
+          - /usr/etc/buildkit/buildkitd.toml:/etc/buildkit/buildkitd.toml
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
