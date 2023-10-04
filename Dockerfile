@@ -7,7 +7,7 @@
 ARG TOOLCHAIN
 
 # runs markdownlint
-FROM docker.io/node:20.5.0-alpine3.18 AS lint-markdown
+FROM docker.io/node:20.8.0-alpine3.18 AS lint-markdown
 WORKDIR /src
 RUN npm i -g markdownlint-cli@0.34.0
 RUN npm i sentences-per-line@0.2.1
