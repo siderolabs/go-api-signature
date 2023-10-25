@@ -54,6 +54,8 @@ func renewUserKeyViaAuthFlow(ctx context.Context, cc *grpc.ClientConn, options *
 	if browserEnv == "echo" {
 		printLoginDialog()
 	} else {
+		fmt.Fprintf(os.Stderr, "Attempting to open URL: %s\n", loginURL)
+
 		err = browser.OpenURL(loginURL)
 		if err != nil {
 			printLoginDialog()
