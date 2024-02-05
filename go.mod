@@ -3,7 +3,7 @@ module github.com/siderolabs/go-api-signature
 go 1.21.1
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95
+	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/ProtonMail/gopenpgp/v2 v2.7.2
 	github.com/adrg/xdg v0.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2
