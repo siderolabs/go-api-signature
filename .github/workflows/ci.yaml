@@ -1,10 +1,10 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2023-10-04T13:49:23Z by kres latest.
+# Generated on 2024-02-16T10:31:01Z by kres latest.
 
 name: default
 concurrency:
-  group: ${{ github.event.label == null && github.head_ref || github.run_id }}
+  group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
   push:
@@ -20,15 +20,18 @@ concurrency:
 jobs:
   default:
     permissions:
+      actions: read
       contents: write
+      issues: read
       packages: write
+      pull-requests: read
     runs-on:
       - self-hosted
       - generic
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
     services:
       buildkitd:
-        image: moby/buildkit:v0.12.2
+        image: moby/buildkit:v0.12.5
         options: --privileged
         ports:
           - 1234:1234
@@ -46,6 +49,7 @@ jobs:
         with:
           driver: remote
           endpoint: tcp://localhost:1234
+        timeout-minutes: 1
       - name: base
         run: |
           make base
@@ -61,11 +65,6 @@ jobs:
       - name: lint
         run: |
           make lint
-      - name: Generate Checksums
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          sha256sum _out/* > _out/sha256sum.txt
-          sha512sum _out/* > _out/sha512sum.txt
       - name: release-notes
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -76,6 +75,3 @@ jobs:
         with:
           body_path: _out/RELEASE_NOTES.md
           draft: "true"
-          files: |-
-            _out/*
-            _out/sha*.txt

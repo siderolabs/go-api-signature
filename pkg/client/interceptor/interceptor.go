@@ -74,13 +74,13 @@ func New(options Options) *Interceptor {
 	}
 
 	if options.AuthEnabledFunc == nil {
-		options.AuthEnabledFunc = func(ctx context.Context, cc *grpc.ClientConn) (bool, error) {
+		options.AuthEnabledFunc = func(context.Context, *grpc.ClientConn) (bool, error) {
 			return true, nil
 		}
 	}
 
 	if options.GetUserKeyFunc == nil {
-		options.GetUserKeyFunc = func(ctx context.Context, cc *grpc.ClientConn, options *Options) (message.Signer, error) {
+		options.GetUserKeyFunc = func(_ context.Context, _ *grpc.ClientConn, options *Options) (message.Signer, error) {
 			return options.UserKeyProvider.ReadValidKey(options.ContextName, options.Identity)
 		}
 	}

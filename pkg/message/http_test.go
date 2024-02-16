@@ -52,26 +52,26 @@ func TestHTTP(t *testing.T) {
 	}{
 		{
 			name:          "no changes",
-			mutator:       func(t *testing.T, req *http.Request) {},
+			mutator:       func(*testing.T, *http.Request) {},
 			expectFailure: false,
 		},
 		{
 			name: "method",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.Method = http.MethodGet
 			},
 			expectFailure: true,
 		},
 		{
 			name: "not important header",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.Header.Set("foo", "bar")
 			},
 			expectFailure: false,
 		},
 		{
 			name: "corrupt signature",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				signature := req.Header.Get(message.SignatureHeaderKey)
 				req.Header.Set(message.SignatureHeaderKey, signature+"0")
 			},
@@ -79,42 +79,42 @@ func TestHTTP(t *testing.T) {
 		},
 		{
 			name: "mutate body",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.Body = io.NopCloser(bytes.NewReader(nil))
 			},
 			expectFailure: true,
 		},
 		{
 			name: "mutate uri",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.RequestURI = "/other/path"
 			},
 			expectFailure: true,
 		},
 		{
 			name: "mutate timestamp --",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.Header.Set(message.TimestampHeaderKey, strconv.FormatInt(time.Now().Add(-time.Hour).Unix(), 10))
 			},
 			expectFailure: true,
 		},
 		{
 			name: "mutate timestamp ++",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.Header.Set(message.TimestampHeaderKey, strconv.FormatInt(time.Now().Add(time.Hour).Unix(), 10))
 			},
 			expectFailure: true,
 		},
 		{
 			name: "drop signature",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.Header.Del(message.SignatureHeaderKey)
 			},
 			expectFailure: true,
 		},
 		{
 			name: "drop timestamp",
-			mutator: func(t *testing.T, req *http.Request) {
+			mutator: func(_ *testing.T, req *http.Request) {
 				req.Header.Del(message.TimestampHeaderKey)
 			},
 			expectFailure: true,

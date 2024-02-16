@@ -48,26 +48,26 @@ func TestGRPC(t *testing.T) {
 	}{
 		{
 			name:          "no changes",
-			mutator:       func(t *testing.T, md metadata.MD) {},
+			mutator:       func(*testing.T, metadata.MD) {},
 			expectFailure: false,
 		},
 		{
 			name: "important header",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				md.Set("cluster", "baz")
 			},
 			expectFailure: true,
 		},
 		{
 			name: "not important header",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				md.Set("foo", "bar")
 			},
 			expectFailure: false,
 		},
 		{
 			name: "corrupt signature",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				signature := md.Get(message.SignatureHeaderKey)[0]
 				md.Set(message.SignatureHeaderKey, signature+"0")
 			},
@@ -92,35 +92,35 @@ func TestGRPC(t *testing.T) {
 		},
 		{
 			name: "mutate timestamp --",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				md.Set(message.TimestampHeaderKey, strconv.FormatInt(time.Now().Add(-time.Hour).Unix(), 10))
 			},
 			expectFailure: true,
 		},
 		{
 			name: "mutate timestamp ++",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				md.Set(message.TimestampHeaderKey, strconv.FormatInt(time.Now().Add(time.Hour).Unix(), 10))
 			},
 			expectFailure: true,
 		},
 		{
 			name: "drop signature",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				md.Delete(message.SignatureHeaderKey)
 			},
 			expectFailure: true,
 		},
 		{
 			name: "drop payload",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				md.Delete(message.PayloadHeaderKey)
 			},
 			expectFailure: true,
 		},
 		{
 			name: "drop timestamp",
-			mutator: func(t *testing.T, md metadata.MD) {
+			mutator: func(_ *testing.T, md metadata.MD) {
 				md.Delete(message.TimestampHeaderKey)
 			},
 			expectFailure: true,
@@ -131,6 +131,7 @@ func TestGRPC(t *testing.T) {
 			mCopy.Metadata = mCopy.Metadata.Copy()
 
 			tt.mutator(t, mCopy.Metadata)
+
 			if tt.expectFailure {
 				assert.Error(t, mCopy.VerifySignature(mockSignerVerifier{}))
 			} else {
