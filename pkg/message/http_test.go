@@ -65,7 +65,7 @@ func TestHTTP(t *testing.T) {
 		{
 			name: "not important header",
 			mutator: func(_ *testing.T, req *http.Request) {
-				req.Header.Set("foo", "bar")
+				req.Header.Set("foo", "bar") //nolint:canonicalheader
 			},
 			expectFailure: false,
 		},

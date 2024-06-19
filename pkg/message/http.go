@@ -54,17 +54,17 @@ func NewHTTP(r *http.Request) (*HTTP, error) {
 }
 
 func (m *HTTP) timestamp() (*time.Time, error) {
-	return parseTimestamp(m.request.Header.Get(TimestampHeaderKey))
+	return parseTimestamp(m.request.Header.Get(TimestampHeaderKey)) //nolint:canonicalheader
 }
 
 // Signature returns the signature on the message.
 func (m *HTTP) Signature() (*Signature, error) {
-	return parseSignature(m.request.Header.Get(SignatureHeaderKey))
+	return parseSignature(m.request.Header.Get(SignatureHeaderKey)) //nolint:canonicalheader
 }
 
 // Sign signs the message with the given signer for SignatureVersionV1.
 func (m *HTTP) Sign(identity string, signer Signer) error {
-	m.request.Header.Set(TimestampHeaderKey, strconv.FormatInt(time.Now().Unix(), 10))
+	m.request.Header.Set(TimestampHeaderKey, strconv.FormatInt(time.Now().Unix(), 10)) //nolint:canonicalheader
 
 	payload, err := m.payload()
 	if err != nil {
@@ -78,6 +78,7 @@ func (m *HTTP) Sign(identity string, signer Signer) error {
 
 	signatureBase64 := base64.StdEncoding.EncodeToString(signature)
 
+	//nolint:canonicalheader
 	m.request.Header.Set(SignatureHeaderKey, fmt.Sprintf("%s %s %s %s", SignatureVersionV1, identity, signer.Fingerprint(), signatureBase64))
 
 	return nil

@@ -69,8 +69,9 @@ func renewUserKeyViaAuthFlow(ctx context.Context, cc *grpc.ClientConn, options *
 		return nil, err
 	}
 
+	//nolint:errcheck
 	fmt.Fprintf(options.InfoWriter, "Public key %s is now registered for user %s\n", publicKeyID, options.Identity)
-	fmt.Fprintf(options.InfoWriter, "PGP key saved to %s\n", savePath)
+	fmt.Fprintf(options.InfoWriter, "PGP key saved to %s\n", savePath) //nolint:errcheck
 
 	return pgpKey, nil
 }

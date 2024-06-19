@@ -165,7 +165,7 @@ func (i *Interceptor) intercept(ctx context.Context, cc *grpc.ClientConn, method
 			return err
 		}
 
-		fmt.Fprintf(i.options.InfoWriter, "Could not authenticate: %v\n", err)
+		fmt.Fprintf(i.options.InfoWriter, "Could not authenticate: %v\n", err) //nolint:errcheck
 
 		if err = i.renewUser(ctx, cc); err != nil {
 			return err
@@ -271,7 +271,7 @@ func (i *Interceptor) initialize(ctx context.Context, cc *grpc.ClientConn) error
 	}
 
 	if _, err = i.initAndGetUserSigner(ctx, cc); err != nil {
-		fmt.Fprintf(i.options.InfoWriter, "Could not authenticate: %v\n", err)
+		fmt.Fprintf(i.options.InfoWriter, "Could not authenticate: %v\n", err) //nolint:errcheck
 
 		renewedSigner, renewErr := i.options.RenewUserKeyFunc(ctx, cc, &i.options)
 		if renewErr != nil {

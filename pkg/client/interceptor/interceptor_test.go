@@ -135,7 +135,7 @@ func (suite *SignatureTestSuite) SetupSuite() {
 		grpc.WithStreamInterceptor(clientInterceptor.Stream()),
 	}
 
-	suite.clientConn, err = grpc.Dial(suite.Target, dialOptions...)
+	suite.clientConn, err = grpc.NewClient(suite.Target, dialOptions...)
 	suite.Require().NoError(err)
 
 	suite.testServiceClient = grpc_testing.NewTestServiceClient(suite.clientConn)
