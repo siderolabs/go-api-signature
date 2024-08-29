@@ -8,7 +8,6 @@ package pgp
 import (
 	"crypto"
 	"math"
-	"sync"
 	"time"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -20,7 +19,6 @@ import (
 type Key struct {
 	key     *pgpcrypto.Key
 	keyring *pgpcrypto.KeyRing
-	mu      sync.Mutex
 }
 
 // GenerateKey generates a new PGP key pair.
@@ -79,9 +77,6 @@ func (p *Key) Verify(data, signature []byte) error {
 
 // Sign signs the given data using the private key.
 func (p *Key) Sign(data []byte) ([]byte, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	message := pgpcrypto.NewPlainMessage(data)
 
 	signature, err := p.keyring.SignDetached(message)

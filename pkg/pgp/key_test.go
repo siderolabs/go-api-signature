@@ -22,6 +22,10 @@ func TestKeyFlow(t *testing.T) {
 	key, err := pgp.GenerateKey("John Smith", "Linux", "john.smith@example.com", time.Hour)
 	require.NoError(t, err)
 
+	testKeyFlow(t, key)
+}
+
+func testKeyFlow(t *testing.T, key *pgp.Key) {
 	assert.True(t, key.IsPrivate())
 	assert.NoError(t, key.Validate())
 
