@@ -170,6 +170,16 @@ func TestKeyValidation(t *testing.T) {
 				pgp.WithValidEmailAsName(false),
 			},
 		},
+		{
+			name:     "should be ok",
+			email:    "keytest@example.com",
+			lifetime: pgp.DefaultMaxAllowedLifetime,
+		},
+		{
+			name:     "should be ok (with time truncation)",
+			email:    "keytest@example.com",
+			lifetime: pgp.DefaultMaxAllowedLifetime + time.Minute - time.Nanosecond,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			key := genKey(t, uint32(tt.lifetime/time.Second), tt.email, func() time.Time {

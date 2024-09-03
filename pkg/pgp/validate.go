@@ -100,7 +100,10 @@ func (p *Key) validateLifetime(opts *validationOptions) error {
 		return fmt.Errorf("key does not contain a valid key lifetime")
 	}
 
-	expiration := time.Now().Add(opts.maxAllowedLifetime)
+	// We don't care when the key was created, only when it expires relative to the server "now" time.
+	//
+	// Also add one minute to account for rounding errors or time skew.
+	expiration := time.Now().Add(opts.maxAllowedLifetime + time.Minute)
 
 	if !entity.PrimaryKey.KeyExpired(sig, expiration) {
 		return fmt.Errorf("key lifetime is too long: %s", time.Duration(*sig.KeyLifetimeSecs)*time.Second)
