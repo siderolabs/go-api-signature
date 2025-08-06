@@ -14,6 +14,7 @@ import (
 	pgpcrypto "github.com/ProtonMail/gopenpgp/v2/crypto"
 	"github.com/adrg/xdg"
 
+	"github.com/siderolabs/go-api-signature/pkg/fileutils"
 	"github.com/siderolabs/go-api-signature/pkg/pgp"
 )
 
@@ -23,15 +24,38 @@ const (
 
 // KeyProvider handles loading/saving client keys.
 type KeyProvider struct {
+	// dataFileDirectory is the directory where keys are stored while XDG_DATA_HOME is used as base directory.
 	dataFileDirectory string
-	keyLifetime       time.Duration
+	// customDataFileDirectory is the directory where keys are stored if custom option is preferred over XDG.
+	customDataFileDirectory string
+	// customBaseDirectory is the base directory to use if custom option is preferred over XDG.
+	customBaseDirectory string
+	keyLifetime         time.Duration
+	withFallback        bool
+	preferCustomOverXDG bool
 }
 
 // NewKeyProvider creates a new KeyProvider.
 func NewKeyProvider(dataFileDirectory string) *KeyProvider {
 	return &KeyProvider{
-		dataFileDirectory: dataFileDirectory,
-		keyLifetime:       keyLifetime,
+		dataFileDirectory:       dataFileDirectory,
+		keyLifetime:             keyLifetime,
+		customDataFileDirectory: dataFileDirectory,
+		customBaseDirectory:     xdg.DataHome,
+		preferCustomOverXDG:     false,
+		withFallback:            false,
+	}
+}
+
+// NewKeyProviderWithFallback creates a new KeyProvider with fallback option to a custom directory over XDG.
+func NewKeyProviderWithFallback(dataFileDirectory, customBaseDirectory, customDataFileDirectory string, preferCustomOverXDG bool) *KeyProvider {
+	return &KeyProvider{
+		dataFileDirectory:       dataFileDirectory,
+		keyLifetime:             keyLifetime,
+		customBaseDirectory:     customBaseDirectory,
+		customDataFileDirectory: customDataFileDirectory,
+		preferCustomOverXDG:     preferCustomOverXDG,
+		withFallback:            true,
 	}
 }
 
@@ -39,7 +63,7 @@ func NewKeyProvider(dataFileDirectory string) *KeyProvider {
 //
 // If the key is missing or invalid (e.g., expired, revoked), an error will be returned.
 func (provider *KeyProvider) ReadValidKey(context, email string) (*Key, error) {
-	keyPath, err := provider.getKeyFilePath(context, email)
+	keyPath, err := provider.getKeyFilePath(context, email, READ)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +125,7 @@ func (provider *KeyProvider) GenerateKey(context, email, clientNameWithVersion s
 
 // DeleteKey deletes the key pair from disk.
 func (provider *KeyProvider) DeleteKey(context, email string) error {
-	keyPath, err := provider.getKeyFilePath(context, email)
+	keyPath, err := provider.getKeyFilePath(context, email, DELETE)
 	if err != nil {
 		return err
 	}
@@ -116,7 +140,7 @@ func (provider *KeyProvider) WriteKey(c *Key) (string, error) {
 		return "", err
 	}
 
-	keyPath, err := provider.getKeyFilePath(c.context, c.identity)
+	keyPath, err := provider.getKeyFilePath(c.context, c.identity, WRITE)
 	if err != nil {
 		return "", err
 	}
@@ -129,8 +153,48 @@ func (provider *KeyProvider) WriteKey(c *Key) (string, error) {
 	return keyPath, err
 }
 
-func (provider *KeyProvider) getKeyFilePath(context, identity string) (string, error) {
+type accessType int32
+
+const (
+	READ accessType = iota
+	WRITE
+	DELETE
+)
+
+func (provider *KeyProvider) getKeyFilePath(context, identity string, access accessType) (string, error) {
 	keyName := fmt.Sprintf("%s-%s.pgp", context, identity)
 
-	return xdg.DataFile(filepath.Join(provider.dataFileDirectory, keyName))
+	if !provider.withFallback {
+		if !provider.preferCustomOverXDG {
+			return xdg.DataFile(filepath.Join(provider.dataFileDirectory, keyName))
+		}
+
+		return provider.ensureCustomPath(keyName)
+	}
+
+	if access == READ || access == DELETE {
+		if !provider.preferCustomOverXDG && fileutils.FileExists(filepath.Join(xdg.DataHome, provider.dataFileDirectory, keyName)) {
+			return xdg.DataFile(filepath.Join(provider.dataFileDirectory, keyName))
+		}
+
+		return provider.ensureCustomPath(keyName)
+	}
+
+	if !provider.preferCustomOverXDG && fileutils.IsWritable(filepath.Join(xdg.DataHome, provider.dataFileDirectory)) {
+		return xdg.DataFile(filepath.Join(provider.dataFileDirectory, keyName))
+	}
+
+	return provider.ensureCustomPath(keyName)
+}
+
+func (provider *KeyProvider) ensureCustomPath(keyName string) (string, error) {
+	basePath := filepath.Join(provider.customBaseDirectory, provider.customDataFileDirectory)
+	fullPath := filepath.Join(basePath, keyName)
+
+	err := os.MkdirAll(basePath, os.ModeDir|0o700)
+	if err != nil {
+		return "", err
+	}
+
+	return fullPath, nil
 }

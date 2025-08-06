@@ -62,7 +62,7 @@ func renewUserKeyViaAuthFlow(ctx context.Context, cc *grpc.ClientConn, options *
 		}
 	}
 
-	publicKeyID := pgpKey.Key.Fingerprint()
+	publicKeyID := pgpKey.Fingerprint()
 
 	err = authCli.AwaitPublicKeyConfirmation(ctx, publicKeyID)
 	if err != nil {
