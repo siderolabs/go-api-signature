@@ -172,8 +172,23 @@ func (provider *KeyProvider) getKeyFilePath(context, identity string, access acc
 		return provider.ensureCustomPath(keyName)
 	}
 
+	// For Read and Delete operations, regardless of preferred location, if using primary location will result in
+	// failure, then use secondary location. If fallback doesn't succeed, then fail using primary location.
+	//
+	// For Write operation, if preferred location is Custom, do not fall back to XDG upon failure.
 	if access == READ || access == DELETE {
-		if !provider.preferCustomOverXDG && fileutils.FileExists(filepath.Join(xdg.DataHome, provider.dataFileDirectory, keyName)) {
+		xdgExists := fileutils.FileExists(filepath.Join(xdg.DataHome, provider.dataFileDirectory, keyName))
+		customExists := fileutils.FileExists(filepath.Join(provider.customBaseDirectory, provider.customDataFileDirectory, keyName))
+
+		if !provider.preferCustomOverXDG {
+			if !xdgExists && customExists {
+				return provider.ensureCustomPath(keyName)
+			}
+
+			return xdg.DataFile(filepath.Join(provider.dataFileDirectory, keyName))
+		}
+
+		if xdgExists && !customExists {
 			return xdg.DataFile(filepath.Join(provider.dataFileDirectory, keyName))
 		}
 
