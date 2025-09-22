@@ -16,7 +16,7 @@ var includedHeaders = []string{
 	NodesHeaderKey,
 	SelectorsHeaderKey,
 	FieldSelectorsHeaderKey,
-	RuntimeHeaderHey,
+	RuntimeHeaderKey,
 	ContextHeaderKey,
 	ClusterHeaderKey,
 	NamespaceHeaderKey,

@@ -37,7 +37,7 @@ const (
 	NodesHeaderKey          = "nodes"
 	SelectorsHeaderKey      = "selectors"
 	FieldSelectorsHeaderKey = "fieldSelectors"
-	RuntimeHeaderHey        = "runtime"
+	RuntimeHeaderKey        = "runtime"
 	ContextHeaderKey        = "context"
 	ClusterHeaderKey        = "cluster"
 	NamespaceHeaderKey      = "namespace"
@@ -46,6 +46,9 @@ const (
 
 // ErrNotFound is returned when a metadata header is not found.
 var ErrNotFound = errors.New("not found")
+
+// ErrInvalidSignature is returned when a signature is invalid.
+var ErrInvalidSignature = errors.New("invalid signature")
 
 func parseTimestamp(value string) (*time.Time, error) {
 	if value == "" {
@@ -62,7 +65,33 @@ func parseTimestamp(value string) (*time.Time, error) {
 	return &timestamp, nil
 }
 
-func parseSignature(value string) (*Signature, error) {
+func parseSignature(value string, requiredCheck SignatureRequiredCheckFunc) (*Signature, error) {
+	if requiredCheck == nil {
+		requiredCheck = func() (bool, error) {
+			return true, nil
+		}
+	}
+
+	signature, err := parseSignatureValue(value)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			required, requiredErr := requiredCheck()
+			if requiredErr != nil {
+				return nil, requiredErr
+			}
+
+			if required {
+				return nil, ErrInvalidSignature
+			}
+		}
+
+		return nil, err
+	}
+
+	return signature, nil
+}
+
+func parseSignatureValue(value string) (*Signature, error) {
 	if value == "" {
 		return nil, fmt.Errorf("%w: %s", ErrNotFound, SignatureHeaderKey)
 	}
@@ -95,4 +124,22 @@ func verifyTimestamp(timestamp *time.Time) error {
 	}
 
 	return nil
+}
+
+// SignatureRequiredCheckFunc is a function that checks if a signature is required for the message.
+type SignatureRequiredCheckFunc func() (bool, error)
+
+// Options contains configuration options for message processing.
+type Options struct {
+	SignatureRequiredCheck SignatureRequiredCheckFunc
+}
+
+// Option is a function that configures Options.
+type Option func(*Options)
+
+// WithSignatureRequiredCheck sets the function to check if a signature is required.
+func WithSignatureRequiredCheck(f SignatureRequiredCheckFunc) Option {
+	return func(o *Options) {
+		o.SignatureRequiredCheck = f
+	}
 }

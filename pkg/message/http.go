@@ -23,15 +23,21 @@ const maxBodySize = 1024 * 1024
 // HTTP represents a gRPC message.
 type HTTP struct {
 	request *http.Request
+	options Options
 	body    []byte
 }
 
 // NewHTTP returns a new HTTP message.
-func NewHTTP(r *http.Request) (*HTTP, error) {
+func NewHTTP(r *http.Request, options ...Option) (*HTTP, error) {
 	var (
 		bodyBytes []byte
 		err       error
+		opts      Options
 	)
+
+	for _, option := range options {
+		option(&opts)
+	}
 
 	if r.Body != nil {
 		bodyBytes, err = io.ReadAll(io.LimitReader(r.Body, maxBodySize))
@@ -50,6 +56,7 @@ func NewHTTP(r *http.Request) (*HTTP, error) {
 	return &HTTP{
 		request: r,
 		body:    bodyBytes,
+		options: opts,
 	}, nil
 }
 
@@ -59,7 +66,7 @@ func (m *HTTP) timestamp() (*time.Time, error) {
 
 // Signature returns the signature on the message.
 func (m *HTTP) Signature() (*Signature, error) {
-	return parseSignature(m.request.Header.Get(SignatureHeaderKey)) //nolint:canonicalheader
+	return parseSignature(m.request.Header.Get(SignatureHeaderKey), m.options.SignatureRequiredCheck) //nolint:canonicalheader
 }
 
 // Sign signs the message with the given signer for SignatureVersionV1.

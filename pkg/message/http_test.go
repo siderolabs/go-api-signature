@@ -137,3 +137,35 @@ func TestHTTP(t *testing.T) {
 		})
 	}
 }
+
+func TestHTTPMessageSignatures(t *testing.T) {
+	t.Parallel()
+
+	t.Run("invalid signature", func(t *testing.T) {
+		t.Parallel()
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.com", nil)
+		require.NoError(t, err)
+
+		m, err := message.NewHTTP(req)
+		require.NoError(t, err)
+
+		_, err = m.Signature()
+		require.ErrorIs(t, err, message.ErrInvalidSignature)
+	})
+
+	t.Run("no signature", func(t *testing.T) {
+		t.Parallel()
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://example.com", nil)
+		require.NoError(t, err)
+
+		m, err := message.NewHTTP(req, message.WithSignatureRequiredCheck(func() (bool, error) {
+			return false, nil
+		}))
+		require.NoError(t, err)
+
+		_, err = m.Signature()
+		require.ErrorIs(t, err, message.ErrNotFound)
+	})
+}

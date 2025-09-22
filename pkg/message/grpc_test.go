@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 
+	authpb "github.com/siderolabs/go-api-signature/api/auth"
 	"github.com/siderolabs/go-api-signature/pkg/message"
 )
 
@@ -139,4 +140,37 @@ func TestGRPC(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGRPCMessageSignatures(t *testing.T) {
+	t.Parallel()
+
+	t.Run("invalid signature", func(t *testing.T) {
+		t.Parallel()
+
+		m := message.NewGRPC(metadata.Pairs("cluster", "foo", "node", "bar"), "some.method.Name")
+
+		_, err := m.Signature()
+		require.ErrorIs(t, err, message.ErrInvalidSignature)
+	})
+
+	t.Run("no signature", func(t *testing.T) {
+		t.Parallel()
+
+		m := message.NewGRPC(metadata.Pairs("cluster", "foo", "node", "bar"), "some.method.Name", message.WithSignatureRequiredCheck(func() (bool, error) {
+			return false, nil
+		}))
+
+		_, err := m.Signature()
+		require.ErrorIs(t, err, message.ErrNotFound)
+	})
+
+	t.Run("RegisterPublicKey no signature", func(t *testing.T) {
+		t.Parallel()
+
+		m := message.NewGRPC(metadata.Pairs(), authpb.AuthService_ConfirmPublicKey_FullMethodName)
+
+		_, err := m.Signature()
+		require.ErrorIs(t, err, message.ErrNotFound)
+	})
 }

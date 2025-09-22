@@ -16,20 +16,29 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
+	authpb "github.com/siderolabs/go-api-signature/api/auth"
 	"github.com/siderolabs/go-api-signature/pkg/jwt"
 )
 
 // GRPC represents a gRPC message.
 type GRPC struct {
 	Metadata metadata.MD
+	Options  Options
 	Method   string
 }
 
 // NewGRPC creates a new GRPC from the given metadata and method.
-func NewGRPC(md metadata.MD, method string) *GRPC {
+func NewGRPC(md metadata.MD, method string, options ...Option) *GRPC {
+	var opts Options
+
+	for _, option := range options {
+		option(&opts)
+	}
+
 	return &GRPC{
 		Metadata: md,
 		Method:   method,
+		Options:  opts,
 	}
 }
 
@@ -48,7 +57,21 @@ func (m *GRPC) timestamp() (*time.Time, error) {
 
 // Signature returns the signature on the message.
 func (m *GRPC) Signature() (*Signature, error) {
-	return parseSignature(m.firstHeader(SignatureHeaderKey))
+	signatureRequired := func() (bool, error) {
+		if m.Method == authpb.AuthService_ConfirmPublicKey_FullMethodName ||
+			m.Method == authpb.AuthService_RegisterPublicKey_FullMethodName ||
+			m.Method == authpb.AuthService_AwaitPublicKeyConfirmation_FullMethodName {
+			return false, nil
+		}
+
+		if m.Options.SignatureRequiredCheck != nil {
+			return m.Options.SignatureRequiredCheck()
+		}
+
+		return true, nil
+	}
+
+	return parseSignature(m.firstHeader(SignatureHeaderKey), signatureRequired)
 }
 
 // JWT returns the JWT on the message.
