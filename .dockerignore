@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2023-04-07T17:34:58Z by kres latest.
+# Generated on 2025-10-08T09:12:43Z by kres 063080a.
 
 *
 !api
@@ -11,3 +11,4 @@
 !README.md
 !.markdownlint.json
 !.license-header.go.txt
+!hack/govulncheck.sh
