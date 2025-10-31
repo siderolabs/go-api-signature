@@ -14,6 +14,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -27,6 +28,7 @@ type PublicKey struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PgpData       []byte                 `protobuf:"bytes,1,opt,name=pgp_data,json=pgpData,proto3" json:"pgp_data,omitempty"`
 	WebauthnData  []byte                 `protobuf:"bytes,2,opt,name=webauthn_data,json=webauthnData,proto3" json:"webauthn_data,omitempty"`
+	PlainKey      *PublicKey_Plain       `protobuf:"bytes,3,opt,name=plain_key,json=plainKey,proto3" json:"plain_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,6 +73,13 @@ func (x *PublicKey) GetPgpData() []byte {
 func (x *PublicKey) GetWebauthnData() []byte {
 	if x != nil {
 		return x.WebauthnData
+	}
+	return nil
+}
+
+func (x *PublicKey) GetPlainKey() *PublicKey_Plain {
+	if x != nil {
+		return x.PlainKey
 	}
 	return nil
 }
@@ -373,14 +382,80 @@ func (x *RevokePublicKeyRequest) GetPublicKeyId() string {
 	return ""
 }
 
+type PublicKey_Plain struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	KeyPem        string                 `protobuf:"bytes,1,opt,name=key_pem,json=keyPem,proto3" json:"key_pem,omitempty"`
+	NotBefore     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=not_before,json=notBefore,proto3" json:"not_before,omitempty"`
+	NotAfter      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=not_after,json=notAfter,proto3" json:"not_after,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PublicKey_Plain) Reset() {
+	*x = PublicKey_Plain{}
+	mi := &file_auth_auth_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PublicKey_Plain) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublicKey_Plain) ProtoMessage() {}
+
+func (x *PublicKey_Plain) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_auth_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublicKey_Plain.ProtoReflect.Descriptor instead.
+func (*PublicKey_Plain) Descriptor() ([]byte, []int) {
+	return file_auth_auth_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *PublicKey_Plain) GetKeyPem() string {
+	if x != nil {
+		return x.KeyPem
+	}
+	return ""
+}
+
+func (x *PublicKey_Plain) GetNotBefore() *timestamppb.Timestamp {
+	if x != nil {
+		return x.NotBefore
+	}
+	return nil
+}
+
+func (x *PublicKey_Plain) GetNotAfter() *timestamppb.Timestamp {
+	if x != nil {
+		return x.NotAfter
+	}
+	return nil
+}
+
 var File_auth_auth_proto protoreflect.FileDescriptor
 
 const file_auth_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x0fauth/auth.proto\x12\x04auth\x1a\x1bgoogle/protobuf/empty.proto\"K\n" +
+	"\x0fauth/auth.proto\x12\x04auth\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x96\x02\n" +
 	"\tPublicKey\x12\x19\n" +
 	"\bpgp_data\x18\x01 \x01(\fR\apgpData\x12#\n" +
-	"\rwebauthn_data\x18\x02 \x01(\fR\fwebauthnData\" \n" +
+	"\rwebauthn_data\x18\x02 \x01(\fR\fwebauthnData\x122\n" +
+	"\tplain_key\x18\x03 \x01(\v2\x15.auth.PublicKey.PlainR\bplainKey\x1a\x94\x01\n" +
+	"\x05Plain\x12\x17\n" +
+	"\akey_pem\x18\x01 \x01(\tR\x06keyPem\x129\n" +
+	"\n" +
+	"not_before\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tnotBefore\x127\n" +
+	"\tnot_after\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfter\" \n" +
 	"\bIdentity\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"\xbc\x01\n" +
 	"\x18RegisterPublicKeyRequest\x12.\n" +
@@ -416,7 +491,7 @@ func file_auth_auth_proto_rawDescGZIP() []byte {
 	return file_auth_auth_proto_rawDescData
 }
 
-var file_auth_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_auth_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_auth_auth_proto_goTypes = []any{
 	(*PublicKey)(nil),                         // 0: auth.PublicKey
 	(*Identity)(nil),                          // 1: auth.Identity
@@ -425,24 +500,29 @@ var file_auth_auth_proto_goTypes = []any{
 	(*AwaitPublicKeyConfirmationRequest)(nil), // 4: auth.AwaitPublicKeyConfirmationRequest
 	(*ConfirmPublicKeyRequest)(nil),           // 5: auth.ConfirmPublicKeyRequest
 	(*RevokePublicKeyRequest)(nil),            // 6: auth.RevokePublicKeyRequest
-	(*emptypb.Empty)(nil),                     // 7: google.protobuf.Empty
+	(*PublicKey_Plain)(nil),                   // 7: auth.PublicKey.Plain
+	(*timestamppb.Timestamp)(nil),             // 8: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                     // 9: google.protobuf.Empty
 }
 var file_auth_auth_proto_depIdxs = []int32{
-	0, // 0: auth.RegisterPublicKeyRequest.public_key:type_name -> auth.PublicKey
-	1, // 1: auth.RegisterPublicKeyRequest.identity:type_name -> auth.Identity
-	2, // 2: auth.AuthService.RegisterPublicKey:input_type -> auth.RegisterPublicKeyRequest
-	4, // 3: auth.AuthService.AwaitPublicKeyConfirmation:input_type -> auth.AwaitPublicKeyConfirmationRequest
-	5, // 4: auth.AuthService.ConfirmPublicKey:input_type -> auth.ConfirmPublicKeyRequest
-	6, // 5: auth.AuthService.RevokePublicKey:input_type -> auth.RevokePublicKeyRequest
-	3, // 6: auth.AuthService.RegisterPublicKey:output_type -> auth.RegisterPublicKeyResponse
-	7, // 7: auth.AuthService.AwaitPublicKeyConfirmation:output_type -> google.protobuf.Empty
-	7, // 8: auth.AuthService.ConfirmPublicKey:output_type -> google.protobuf.Empty
-	7, // 9: auth.AuthService.RevokePublicKey:output_type -> google.protobuf.Empty
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	7, // 0: auth.PublicKey.plain_key:type_name -> auth.PublicKey.Plain
+	0, // 1: auth.RegisterPublicKeyRequest.public_key:type_name -> auth.PublicKey
+	1, // 2: auth.RegisterPublicKeyRequest.identity:type_name -> auth.Identity
+	8, // 3: auth.PublicKey.Plain.not_before:type_name -> google.protobuf.Timestamp
+	8, // 4: auth.PublicKey.Plain.not_after:type_name -> google.protobuf.Timestamp
+	2, // 5: auth.AuthService.RegisterPublicKey:input_type -> auth.RegisterPublicKeyRequest
+	4, // 6: auth.AuthService.AwaitPublicKeyConfirmation:input_type -> auth.AwaitPublicKeyConfirmationRequest
+	5, // 7: auth.AuthService.ConfirmPublicKey:input_type -> auth.ConfirmPublicKeyRequest
+	6, // 8: auth.AuthService.RevokePublicKey:input_type -> auth.RevokePublicKeyRequest
+	3, // 9: auth.AuthService.RegisterPublicKey:output_type -> auth.RegisterPublicKeyResponse
+	9, // 10: auth.AuthService.AwaitPublicKeyConfirmation:output_type -> google.protobuf.Empty
+	9, // 11: auth.AuthService.ConfirmPublicKey:output_type -> google.protobuf.Empty
+	9, // 12: auth.AuthService.RevokePublicKey:output_type -> google.protobuf.Empty
+	9, // [9:13] is the sub-list for method output_type
+	5, // [5:9] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_auth_auth_proto_init() }
@@ -456,7 +536,7 @@ func file_auth_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_auth_proto_rawDesc), len(file_auth_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

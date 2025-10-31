@@ -55,6 +55,9 @@ func (p *Key) Fingerprint() string {
 }
 
 // Verify verifies the signature of the given data using the public key.
+// NB: we do not expect/validate the timestamp inside the signature.
+// Timestamp validation is deferred to the library using the module.
+// It can be stored in the signed payload.
 func (p *Key) Verify(data, signature []byte) error {
 	message := pgpcrypto.NewPlainMessage(data)
 
