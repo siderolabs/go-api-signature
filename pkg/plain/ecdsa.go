@@ -46,19 +46,14 @@ func (p *EcdsaKey) ID() string {
 func (p *EcdsaKey) Verify(data, signature []byte) error {
 	hash := sha256.Sum256(data)
 
-	sigBytes, err := base64.StdEncoding.DecodeString(string(signature))
-	if err != nil {
+	if len(signature)%2 != 0 {
 		return errors.New("missing valid signature")
 	}
 
-	if len(sigBytes)%2 != 0 {
-		return errors.New("missing valid signature")
-	}
+	half := len(signature) / 2
 
-	half := len(sigBytes) / 2
-
-	r := new(big.Int).SetBytes(sigBytes[:half])
-	s := new(big.Int).SetBytes(sigBytes[half:])
+	r := new(big.Int).SetBytes(signature[:half])
+	s := new(big.Int).SetBytes(signature[half:])
 
 	if !ecdsa.Verify(p.key, hash[:], r, s) {
 		return errors.New("missing valid signature")

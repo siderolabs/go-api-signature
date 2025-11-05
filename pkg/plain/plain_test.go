@@ -5,6 +5,7 @@
 package plain_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,11 @@ func TestECDSASignature(t *testing.T) {
 
 	require.NoError(t, err)
 
-	require.NoError(t, key.Verify([]byte("hi there"), []byte(signature)))
+	signatureBytes, err := base64.StdEncoding.DecodeString(signature)
 
-	require.ErrorContains(t, key.Verify([]byte("hi there?"), []byte(signature)), "missing valid signature")
+	require.NoError(t, err)
+
+	require.NoError(t, key.Verify([]byte("hi there"), signatureBytes))
+
+	require.ErrorContains(t, key.Verify([]byte("hi there?"), signatureBytes), "missing valid signature")
 }
