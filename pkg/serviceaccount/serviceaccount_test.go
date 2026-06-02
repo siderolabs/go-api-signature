@@ -28,6 +28,13 @@ func TestEncodeDecode(t *testing.T) {
 
 	assert.Equal(t, "bla", decoded.Name)
 	assert.Equal(t, key.Fingerprint(), decoded.Key.Fingerprint())
+
+	message := []byte("Hello, World!")
+
+	signature, err := decoded.Key.Sign(message)
+	require.NoError(t, err)
+
+	assert.NoError(t, decoded.Key.Verify(message, signature))
 }
 
 func TestEnv(t *testing.T) {

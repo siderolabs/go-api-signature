@@ -20,7 +20,7 @@ func IsWritable(path string) bool {
 	}
 
 	// Check if the user bit is enabled in file permission
-	if info.Mode().Perm()&(1<<(uint(7))) == 0 {
+	if info.Mode().Perm()&(1<<uint(7)) == 0 {
 		return false
 	}
 

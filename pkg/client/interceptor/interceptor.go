@@ -96,7 +96,7 @@ func New(options Options) *Interceptor {
 
 // Unary returns a new unary client interceptor which signs requests.
 func (i *Interceptor) Unary() grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		return i.intercept(ctx, cc, method, func(ctx context.Context) error {
 			return invoker(ctx, method, req, reply, cc, opts...)
 		})

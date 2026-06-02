@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	pgpcrypto "github.com/ProtonMail/gopenpgp/v2/crypto"
+	openpgp "github.com/ProtonMail/go-crypto/openpgp/v2"
+	pgpcrypto "github.com/ProtonMail/gopenpgp/v3/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,6 +23,28 @@ func TestKeyFlow(t *testing.T) {
 	require.NoError(t, err)
 
 	testKeyFlow(t, key)
+}
+
+func TestPublicKeyVerifiesDetachedSignature(t *testing.T) {
+	key, err := pgp.GenerateKey("John Smith", "Linux", "john.smith@example.com", time.Hour)
+	require.NoError(t, err)
+
+	publicKeyArmored, err := key.ArmorPublic()
+	require.NoError(t, err)
+
+	publicKey, err := pgpcrypto.NewKeyFromArmored(publicKeyArmored)
+	require.NoError(t, err)
+
+	verifier, err := pgp.NewKey(publicKey)
+	require.NoError(t, err)
+	assert.False(t, verifier.IsPrivate())
+
+	message := []byte("Hello, World!")
+
+	signature, err := key.Sign(message)
+	require.NoError(t, err)
+
+	assert.NoError(t, verifier.Verify(message, signature))
 }
 
 func testKeyFlow(t *testing.T, key *pgp.Key) {
@@ -53,16 +75,35 @@ func TestTimeSkew(t *testing.T) {
 	signature, err := key.Sign(message)
 	require.NoError(t, err)
 
-	pgpcrypto.UpdateTime(start.Add(-time.Minute).Unix())
-
 	assert.NoError(t, key.Verify(message, signature))
 
-	pgpcrypto.UpdateTime(start.Add(time.Hour).Unix())
+	signature = signAt(t, key, message, start.Add(time.Minute))
 
-	signature, err = key.Sign(message)
+	assert.NoError(t, key.Verify(message, signature))
+}
+
+func signAt(t *testing.T, key *pgp.Key, message []byte, at time.Time) []byte {
+	t.Helper()
+
+	rawKey, err := pgpcrypto.NewKeyFromArmored(requireArmored(t, key))
 	require.NoError(t, err)
 
-	assert.NoError(t, key.Verify(message, signature))
+	signer, err := pgpcrypto.PGP().Sign().SigningKey(rawKey).Detached().SignTime(at.Unix()).New()
+	require.NoError(t, err)
+
+	signature, err := signer.Sign(message, pgpcrypto.Bytes)
+	require.NoError(t, err)
+
+	return signature
+}
+
+func requireArmored(t *testing.T, key *pgp.Key) string {
+	t.Helper()
+
+	armored, err := key.Armor()
+	require.NoError(t, err)
+
+	return armored
 }
 
 func genKey(t *testing.T, lifetimeSecs uint32, email string, now func() time.Time) *pgp.Key {
@@ -149,6 +190,19 @@ func TestKeyValidation(t *testing.T) {
 			lifetime: pgp.DefaultAllowedClockSkew / 2,
 		},
 		{
+			name:     "short-lived key generated within limited clock skew",
+			email:    "keytest@example.com",
+			lifetime: pgp.DefaultAllowedClockSkew / 2,
+			shift:    pgp.DefaultAllowedClockSkew / 5,
+		},
+		{
+			name:          "short-lived key generated beyond limited clock skew",
+			email:         "keytest@example.com",
+			lifetime:      pgp.DefaultAllowedClockSkew / 2,
+			shift:         pgp.DefaultAllowedClockSkew / 2,
+			expectedError: "key expired",
+		},
+		{
 			name:     "long-lived key - custom lifetime validation",
 			email:    "keytest@example.com",
 			lifetime: 30 * 24 * time.Hour,
@@ -196,4 +250,26 @@ func TestKeyValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRevokedKeyValidation(t *testing.T) {
+	entity, err := openpgp.NewEntity("test", "test", "keytest@example.com", &packet.Config{
+		Algorithm:              packet.PubKeyAlgoEdDSA,
+		DefaultHash:            crypto.SHA256,
+		DefaultCipher:          packet.CipherAES256,
+		DefaultCompressionAlgo: packet.CompressionZLIB,
+		KeyLifetimeSecs:        uint32(time.Hour.Seconds()),
+		SigLifetimeSecs:        uint32(time.Hour.Seconds()),
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, entity.Revoke(packet.NoReason, "test revocation", nil))
+
+	key, err := pgpcrypto.NewKeyFromEntity(entity)
+	require.NoError(t, err)
+
+	pgpKey, err := pgp.NewKey(key)
+	require.NoError(t, err)
+
+	assert.EqualError(t, pgpKey.Validate(), "key is revoked")
 }

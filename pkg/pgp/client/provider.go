@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"time"
 
-	pgpcrypto "github.com/ProtonMail/gopenpgp/v2/crypto"
+	pgpcrypto "github.com/ProtonMail/gopenpgp/v3/crypto"
 	"github.com/adrg/xdg"
 
 	"github.com/siderolabs/go-api-signature/pkg/fileutils"
@@ -75,7 +75,7 @@ func (provider *KeyProvider) ReadValidKey(context, email string) (*Key, error) {
 
 	defer keyF.Close() //nolint:errcheck
 
-	key, err := pgpcrypto.NewKeyFromArmoredReader(keyF)
+	key, err := pgpcrypto.NewKeyFromReader(keyF)
 	if err != nil {
 		return nil, err
 	}

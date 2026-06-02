@@ -57,13 +57,16 @@ func WithAllowedClockSkew(allowedClockSkew time.Duration) ValidationOption {
 
 // Validate validates the key.
 func (p *Key) Validate(opt ...ValidationOption) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	options := newDefaultValidationOptions()
 
 	for _, o := range opt {
 		o(&options)
 	}
 
-	if p.key.IsRevoked() {
+	if p.isRevoked(time.Now()) {
 		return fmt.Errorf("key is revoked")
 	}
 
@@ -72,12 +75,13 @@ func (p *Key) Validate(opt ...ValidationOption) error {
 		return fmt.Errorf("key does not contain an entity")
 	}
 
-	identity := entity.PrimaryIdentity()
+	// Zero time skips OpenPGP expiry checks; isExpired applies our skew rules below.
+	_, identity := p.primaryIdentity(time.Time{})
 	if identity == nil {
 		return fmt.Errorf("key does not contain a primary identity")
 	}
 
-	if p.IsExpired(options.allowedClockSkew) {
+	if p.isExpired(options.allowedClockSkew) {
 		return fmt.Errorf("key expired")
 	}
 
@@ -93,8 +97,12 @@ func (p *Key) Validate(opt ...ValidationOption) error {
 
 func (p *Key) validateLifetime(opts *validationOptions) error {
 	entity := p.key.GetEntity()
-	identity := entity.PrimaryIdentity()
-	sig := identity.SelfSignature
+
+	// Lifetime validation only needs self-signature metadata, not time validity.
+	sig, _ := p.primaryIdentity(time.Time{})
+	if sig == nil {
+		return fmt.Errorf("key does not contain a primary identity")
+	}
 
 	if sig.KeyLifetimeSecs == nil || *sig.KeyLifetimeSecs == 0 {
 		return fmt.Errorf("key does not contain a valid key lifetime")

@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	pgpcrypto "github.com/ProtonMail/gopenpgp/v2/crypto"
+	pgpcrypto "github.com/ProtonMail/gopenpgp/v3/crypto"
 
 	"github.com/siderolabs/go-api-signature/pkg/pgp"
 )
