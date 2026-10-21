@@ -1,6 +1,6 @@
 module github.com/siderolabs/go-api-signature
 
-go 1.26.0
+go 1.26.4
 
 require (
 	github.com/ProtonMail/go-crypto v1.5.2
@@ -8,7 +8,7 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.32.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
+	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/sys v0.49.0
 	google.golang.org/grpc v1.84.0
