@@ -129,13 +129,9 @@ func (x *Identity) GetEmail() string {
 }
 
 type RegisterPublicKeyRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	PublicKey *PublicKey             `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	Identity  *Identity              `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
-	// The role of the public key. When skip_user_role is true, this field is ignored.
-	Role string `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
-	// If true, the role field will be used to determine the role of the public key.
-	SkipUserRole  bool `protobuf:"varint,6,opt,name=skip_user_role,json=skipUserRole,proto3" json:"skip_user_role,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublicKey     *PublicKey             `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Identity      *Identity              `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -182,20 +178,6 @@ func (x *RegisterPublicKeyRequest) GetIdentity() *Identity {
 		return x.Identity
 	}
 	return nil
-}
-
-func (x *RegisterPublicKeyRequest) GetRole() string {
-	if x != nil {
-		return x.Role
-	}
-	return ""
-}
-
-func (x *RegisterPublicKeyRequest) GetSkipUserRole() bool {
-	if x != nil {
-		return x.SkipUserRole
-	}
-	return false
 }
 
 type RegisterPublicKeyResponse struct {
@@ -457,13 +439,11 @@ const file_auth_auth_proto_rawDesc = "" +
 	"not_before\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tnotBefore\x127\n" +
 	"\tnot_after\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfter\" \n" +
 	"\bIdentity\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\"\xbc\x01\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\"\xa4\x01\n" +
 	"\x18RegisterPublicKeyRequest\x12.\n" +
 	"\n" +
 	"public_key\x18\x01 \x01(\v2\x0f.auth.PublicKeyR\tpublicKey\x12*\n" +
-	"\bidentity\x18\x02 \x01(\v2\x0e.auth.IdentityR\bidentity\x12\x12\n" +
-	"\x04role\x18\x05 \x01(\tR\x04role\x12$\n" +
-	"\x0eskip_user_role\x18\x06 \x01(\bR\fskipUserRoleJ\x04\b\x03\x10\x04J\x04\b\x04\x10\x05\"\\\n" +
+	"\bidentity\x18\x02 \x01(\v2\x0e.auth.IdentityR\bidentityJ\x04\b\x03\x10\x04J\x04\b\x04\x10\x05J\x04\b\x05\x10\x06J\x04\b\x06\x10\aR\x04roleR\x0eskip_user_role\"\\\n" +
 	"\x19RegisterPublicKeyResponse\x12\x1b\n" +
 	"\tlogin_url\x18\x01 \x01(\tR\bloginUrl\x12\"\n" +
 	"\rpublic_key_id\x18\x02 \x01(\tR\vpublicKeyId\"G\n" +

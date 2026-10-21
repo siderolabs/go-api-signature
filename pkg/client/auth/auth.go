@@ -25,40 +25,15 @@ func NewClient(conn *grpc.ClientConn) *Client {
 	}
 }
 
-// RegisterPGPPublicKeyOption customizes authpb.RegisterPublicKeyRequest.
-type RegisterPGPPublicKeyOption func(*authpb.RegisterPublicKeyRequest)
-
-// WithRole sets the role in the authpb.RegisterPublicKeyRequest.
-// Only effective if skipUserRole is true.
-func WithRole(role string) RegisterPGPPublicKeyOption {
-	return func(o *authpb.RegisterPublicKeyRequest) {
-		o.Role = role
-	}
-}
-
-// WithSkipUserRole sets the skipUserRole flag in the authpb.RegisterPublicKeyRequest.
-// When true, the role set via WithRole is respected.
-func WithSkipUserRole(skipUserRole bool) RegisterPGPPublicKeyOption {
-	return func(o *authpb.RegisterPublicKeyRequest) {
-		o.SkipUserRole = skipUserRole
-	}
-}
-
 // RegisterPGPPublicKey registers a PGP public key for the given identity and returns the login URL.
 // Registered public key will need to be verified before it can be used for signing.
-func (client *Client) RegisterPGPPublicKey(ctx context.Context, email string, publicKey []byte, opt ...RegisterPGPPublicKeyOption) (string, error) {
-	request := authpb.RegisterPublicKeyRequest{
+func (client *Client) RegisterPGPPublicKey(ctx context.Context, email string, publicKey []byte) (string, error) {
+	resp, err := client.conn.RegisterPublicKey(ctx, &authpb.RegisterPublicKeyRequest{
 		Identity: &authpb.Identity{Email: email},
 		PublicKey: &authpb.PublicKey{
 			PgpData: publicKey,
 		},
-	}
-
-	for _, o := range opt {
-		o(&request)
-	}
-
-	resp, err := client.conn.RegisterPublicKey(ctx, &request)
+	})
 	if err != nil {
 		return "", err
 	}

@@ -27,10 +27,8 @@ message RegisterPublicKeyRequest {
   Identity identity = 2;
   reserved 3;
   reserved 4;
-  // The role of the public key. When skip_user_role is true, this field is ignored.
-  string role = 5;
-  // If true, the role field will be used to determine the role of the public key.
-  bool skip_user_role = 6;
+  reserved 5, 6;
+  reserved "role", "skip_user_role";
 }
 
 message RegisterPublicKeyResponse {
